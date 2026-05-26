@@ -3,7 +3,7 @@ const STORAGE_KEY = 'nursPlannerData';
 
 const defaultData = {
     students: [
-        { id: '20240001', name: '김지민', status: 'active', type: 'regular', history: { hospitals: [], subjects: [] } },
+        { id: '20240001', name: '임수철', status: 'active', type: 'regular', history: { hospitals: [], subjects: [] } },
         { id: '20240002', name: '이민준', status: 'active', type: 'regular', history: { hospitals: ['A'], subjects: ['아동간호'] } },
         { id: '20240003', name: '박서연', status: 'active', type: 'regular', history: { hospitals: [], subjects: [] } },
         { id: '20240004', name: '최현우', status: 'active', type: 'regular', history: { hospitals: ['B'], subjects: ['여성간호'] } },
