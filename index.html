@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간호대 실습 스케줄러 (Nursing Duty Planner)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <i class="ri-heart-pulse-fill"></i>
+                <span>NursPlanner</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-target="dashboard">
+                    <i class="ri-dashboard-line"></i> 대시보드
+                </a>
+                <a href="#" class="nav-item" data-target="students">
+                    <i class="ri-user-heart-line"></i> 학생 관리
+                </a>
+                <a href="#" class="nav-item" data-target="hospitals">
+                    <i class="ri-hospital-line"></i> 병원 & 과목 관리
+                </a>
+                <a href="#" class="nav-item" data-target="scheduler">
+                    <i class="ri-calendar-check-line"></i> 스케줄링
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <h1 id="page-title">대시보드</h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="reset-data-btn">
+                        <i class="ri-refresh-line"></i> 데이터 초기화
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Pages -->
+            <div class="pages-container">
+                
+                <!-- Dashboard Page -->
+                <section id="dashboard" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                                <i class="ri-group-line"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>총 재학생</h3>
+                                <p id="stat-total-students">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                                <i class="ri-hospital-building-line"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>등록 병원</h3>
+                                <p id="stat-total-hospitals">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                                <i class="ri-book-open-line"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>등록 과목</h3>
+                                <p id="stat-total-subjects">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="panel glass-panel">
+                            <h2>최근 생성된 스케줄 요약</h2>
+                            <p class="empty-state">아직 생성된 스케줄이 없습니다.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Students Page -->
+                <section id="students" class="page">
+                    <div class="panel glass-panel">
+                        <div class="panel-header">
+                            <h2>학생 목록</h2>
+                            <button class="btn btn-primary" id="add-student-btn">
+                                <i class="ri-user-add-line"></i> 학생 추가
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table" id="students-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>학번</th>
+                                        <th>상태</th>
+                                        <th>유형</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 학생 데이터가 여기에 렌더링됩니다 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hospitals Page -->
+                <section id="hospitals" class="page">
+                    <div class="grid-2col">
+                        <div class="panel glass-panel">
+                            <div class="panel-header">
+                                <h2>병원 목록 (A,B,C,D,E)</h2>
+                            </div>
+                            <ul class="list-group" id="hospitals-list">
+                                <!-- 병원 리스트 -->
+                            </ul>
+                        </div>
+                        <div class="panel glass-panel">
+                            <div class="panel-header">
+                                <h2>실습 과목 (교차 배정용)</h2>
+                            </div>
+                            <ul class="list-group" id="subjects-list">
+                                <!-- 과목 리스트 -->
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Scheduler Page -->
+                <section id="scheduler" class="page">
+                    <div class="panel glass-panel mb-4">
+                        <div class="panel-header">
+                            <h2>실습 스케줄 생성</h2>
+                            <button class="btn btn-primary" id="generate-schedule-btn">
+                                <i class="ri-magic-line"></i> 자동 배정 실행
+                            </button>
+                        </div>
+                        <div class="scheduler-controls">
+                            <div class="form-group">
+                                <label>대상 학기</label>
+                                <select id="schedule-semester">
+                                    <option value="1">1학기</option>
+                                    <option value="2">2학기</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel glass-panel">
+                        <h2>스케줄 결과</h2>
+                        <div id="schedule-result">
+                            <p class="empty-state">자동 배정 실행 버튼을 눌러 스케줄을 생성하세요.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="student-modal">
+        <div class="modal-content glass-panel">
+            <h2 id="student-modal-title">학생 추가</h2>
+            <form id="student-form">
+                <div class="form-group">
+                    <label>이름</label>
+                    <input type="text" id="student-name" required placeholder="예: 홍길동">
+                </div>
+                <div class="form-group">
+                    <label>학번</label>
+                    <input type="text" id="student-id" required placeholder="예: 20240001">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>상태</label>
+                        <select id="student-status">
+                            <option value="active">재학</option>
+                            <option value="leave">휴학</option>
+                            <option value="dropout">자퇴</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>유형</label>
+                        <select id="student-type">
+                            <option value="regular">일반</option>
+                            <option value="transfer">편입생</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline close-modal">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
