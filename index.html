@@ -1,213 +1,578 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nursing Duty Planner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검싸개</title>
+<style>
+  :root{
+    --green:#2f9e44; --green-bg:#ebfbee; --green-bd:#b2f2bb;
+    --yellow:#f08c00; --yellow-bg:#fff9db; --yellow-bd:#ffe066;
+    --red:#e03131; --red-bg:#fff5f5; --red-bd:#ffc9c9;
+    --gray:#868e96; --line:#dee2e6;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;margin:0;padding:16px;background:#f1f3f5;color:#212529;line-height:1.6;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .wrap{max-width:1240px;margin:0 auto;width:100%;display:flex;flex-direction:column;flex:1;min-height:0}
+  .topbar{margin-bottom:12px;flex:0 0 auto}
+  h1{font-size:20px;margin:0 0 2px}
+  .sub{color:var(--gray);font-size:13px;margin:0}
+
+  /* 2열: 각 열이 자기 내부에서만 스크롤 (페이지 전체는 고정) */
+  .cols{display:grid;grid-template-columns:1.15fr 0.85fr;gap:14px;align-items:stretch;flex:1;min-height:0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;flex-direction:column;min-height:0}
+  .card.scroll{overflow-y:auto}
+  h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:7px;flex:0 0 auto}
+
+  /* 캡션 입력 영역: 왼쪽 카드 상단에 고정, 아래 생성기·결과만 스크롤 */
+  .caption-fixed{flex:0 0 auto;background:#fff;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .left-scroll{overflow-y:auto;flex:1;min-height:0}
+  textarea{width:100%;min-height:120px;padding:14px;font-size:15px;border:1px solid #ced4da;border-radius:6px;resize:none;overflow:hidden;font-family:inherit;line-height:1.7}
+  .btn{border:none;border-radius:6px;padding:10px 15px;font-size:14px;font-weight:600;cursor:pointer;color:#fff;background:#1971c2}
+  .btn:hover{background:#1864ab}
+  .btn.sec{background:#495057}.btn.sec:hover{background:#343a40}
+  .btn.gen{background:#0ca678}.btn.gen:hover{background:#099268}
+  .btn.sm{padding:7px 12px;font-size:13px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .counter{font-size:13px;color:var(--gray);text-align:right;margin-top:6px}
+  .counter b{color:#212529}
+  .counter.bad b{color:var(--red)}
+
+  /* 결과 하이라이트 */
+  .result-box{border:1px solid var(--line);border-radius:6px;padding:14px;background:#fafafa;min-height:52px;white-space:pre-wrap;font-size:14px;margin-top:12px}
+  .hl-banned{background:#ffd6d6;color:#c92a2a;border-radius:3px;padding:0 2px}
+  .hl-format{background:#fff3bf;color:#9c6800;border-radius:3px;padding:0 2px}
+
+  /* 신호등 체크리스트 */
+  .summary{display:flex;gap:12px;font-size:12px;margin-bottom:12px;flex-wrap:wrap;flex:0 0 auto}
+  .summary span{display:flex;align-items:center;gap:5px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .check{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:7px;margin-bottom:5px;border:1px solid transparent;background:#f8f9fa}
+  .check.green{background:var(--green-bg);border-color:var(--green-bd)}
+  .check.yellow{background:var(--yellow-bg);border-color:var(--yellow-bd)}
+  .check.red{background:var(--red-bg);border-color:var(--red-bd)}
+  .check.idle{opacity:.5}
+  .lamp{flex:0 0 auto;width:11px;height:11px;border-radius:50%;background:#ced4da}
+  .green .lamp{background:var(--green)}
+  .yellow .lamp{background:var(--yellow)}
+  .red .lamp{background:var(--red)}
+  .check .title{font-weight:600;font-size:13.5px;flex:1}
+  .check .badge{font-size:11.5px;color:#495057;background:rgba(0,0,0,.05);padding:1px 7px;border-radius:10px;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+
+  /* 파일철 탭 */
+  .tabcard{padding:0}
+  .tabs{display:flex;gap:4px;padding:10px 12px 0;flex:0 0 auto;border-bottom:1px solid var(--line)}
+  .tab{border:1px solid var(--line);border-bottom:none;background:#f1f3f5;color:#495057;
+       padding:9px 14px;font-size:13.5px;font-weight:600;cursor:pointer;
+       border-radius:8px 8px 0 0;margin-bottom:-1px;display:flex;align-items:center;gap:6px}
+  .tab.active{background:#fff;color:#212529;border-color:var(--line)}
+  .tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;
+             border-radius:8px;font-size:11px;font-weight:700;padding:0 5px;color:#fff}
+  .tab-badge.red{background:var(--red)}
+  .tab-badge.yellow{background:var(--yellow)}
+  .tab-badge.green{background:var(--green)}
+  .tab-badge:empty{display:none}
+  .tabpanel{display:none;flex:1;min-height:0;flex-direction:column;padding:16px}
+  .tabpanel.active{display:flex}
+
+  /* 문장 생성기 */
+  .gen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .gen-group{border:1px solid var(--line);border-radius:8px;padding:10px}
+  .gen-group>strong{font-size:12.5px;display:block;margin-bottom:6px}
+  .opt{display:block;font-size:13px;padding:2px 0;cursor:pointer}
+  .opt input{margin-right:5px}
+  .preview{margin-top:12px;padding:12px;background:#f8f9fa;border:1px dashed #adb5bd;border-radius:6px;font-size:14px;min-height:42px}
+  .hint{font-size:12px;color:var(--gray);margin-top:6px}
+  @media(max-width:900px){
+    body{height:auto;overflow:visible;display:block}
+    .wrap{display:block}
+    .cols{grid-template-columns:1fr;min-height:0}
+    .card,.left-scroll,.tabpanel{overflow:visible;min-height:0}
+  }
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#212529;color:#fff;padding:10px 18px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+  .info-box{margin-top:16px;padding:14px;border-radius:6px;background:#e7f5ff;border:1px solid #a5d8ff;font-size:13px;color:#1864ab}
+</style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar glass-panel">
-            <div class="logo">
-                <i class="ri-heart-pulse-fill"></i>
-                <span>NursPlanner</span>
-            </div>
-            <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-target="dashboard">
-                    <i class="ri-dashboard-line"></i> 대시보드
-                </a>
-                <a href="#" class="nav-item" data-target="students">
-                    <i class="ri-user-heart-line"></i> 학생 관리
-                </a>
-                <a href="#" class="nav-item" data-target="hospitals">
-                    <i class="ri-hospital-line"></i> 병원 & 과목 관리
-                </a>
-                <a href="#" class="nav-item" data-target="scheduler">
-                    <i class="ri-calendar-check-line"></i> 스케줄링
-                </a>
-            </nav>
-        </aside>
+<div class="wrap">
+  <div class="topbar">
+    <h1>캡션 검수기</h1>
+    <p class="sub">왼쪽에서 캡션을 작성·검수하고, 오른쪽 탭에서 체크리스트 확인과 문장 생성을 진행하세요.</p>
+  </div>
 
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="top-header">
-                <h1 id="page-title">대시보드</h1>
-                <div class="header-actions">
-                    <button class="btn btn-outline" id="reset-data-btn">
-                        <i class="ri-refresh-line"></i> 데이터 초기화
-                    </button>
-                    <div class="user-profile">
-                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
-                    </div>
-                </div>
-            </header>
+  <div class="cols">
 
-            <!-- Pages -->
-            <div class="pages-container">
-                
-                <!-- Dashboard Page -->
-                <section id="dashboard" class="page active">
-                    <div class="stats-grid">
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
-                                <i class="ri-group-line"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>총 재학생</h3>
-                                <p id="stat-total-students">0</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
-                                <i class="ri-hospital-building-line"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>등록 병원</h3>
-                                <p id="stat-total-hospitals">0</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
-                                <i class="ri-book-open-line"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>등록 과목</h3>
-                                <p id="stat-total-subjects">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dashboard-content">
-                        <div class="panel glass-panel">
-                            <h2>최근 생성된 스케줄 요약</h2>
-                            <p class="empty-state">아직 생성된 스케줄이 없습니다.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Students Page -->
-                <section id="students" class="page">
-                    <div class="panel glass-panel">
-                        <div class="panel-header">
-                            <h2>학생 목록</h2>
-                            <button class="btn btn-primary" id="add-student-btn">
-                                <i class="ri-user-add-line"></i> 학생 추가
-                            </button>
-                        </div>
-                        <div class="table-container">
-                            <table class="data-table" id="students-table">
-                                <thead>
-                                    <tr>
-                                        <th>이름</th>
-                                        <th>학번</th>
-                                        <th>상태</th>
-                                        <th>유형</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- 학생 데이터가 여기에 렌더링됩니다 -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Hospitals Page -->
-                <section id="hospitals" class="page">
-                    <div class="grid-2col">
-                        <div class="panel glass-panel">
-                            <div class="panel-header">
-                                <h2>병원 목록 (A,B,C,D,E)</h2>
-                            </div>
-                            <ul class="list-group" id="hospitals-list">
-                                <!-- 병원 리스트 -->
-                            </ul>
-                        </div>
-                        <div class="panel glass-panel">
-                            <div class="panel-header">
-                                <h2>실습 과목 (교차 배정용)</h2>
-                            </div>
-                            <ul class="list-group" id="subjects-list">
-                                <!-- 과목 리스트 -->
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Scheduler Page -->
-                <section id="scheduler" class="page">
-                    <div class="panel glass-panel mb-4">
-                        <div class="panel-header">
-                            <h2>실습 스케줄 생성</h2>
-                            <button class="btn btn-primary" id="generate-schedule-btn">
-                                <i class="ri-magic-line"></i> 자동 배정 실행
-                            </button>
-                        </div>
-                        <div class="scheduler-controls">
-                            <div class="form-group">
-                                <label>대상 학기</label>
-                                <select id="schedule-semester">
-                                    <option value="1">1학기</option>
-                                    <option value="2">2학기</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="panel glass-panel">
-                        <h2>스케줄 결과</h2>
-                        <div id="schedule-result">
-                            <p class="empty-state">자동 배정 실행 버튼을 눌러 스케줄을 생성하세요.</p>
-                        </div>
-                    </div>
-                </section>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div class="modal-overlay" id="student-modal">
-        <div class="modal-content glass-panel">
-            <h2 id="student-modal-title">학생 추가</h2>
-            <form id="student-form">
-                <div class="form-group">
-                    <label>이름</label>
-                    <input type="text" id="student-name" required placeholder="예: 홍길동">
-                </div>
-                <div class="form-group">
-                    <label>학번</label>
-                    <input type="text" id="student-id" required placeholder="예: 20240001">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>상태</label>
-                        <select id="student-status">
-                            <option value="active">재학</option>
-                            <option value="leave">휴학</option>
-                            <option value="dropout">자퇴</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>유형</label>
-                        <select id="student-type">
-                            <option value="regular">일반</option>
-                            <option value="transfer">편입생</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline close-modal">취소</button>
-                    <button type="submit" class="btn btn-primary">저장</button>
-                </div>
-            </form>
+    <!-- ===== 왼쪽: 캡션 작업 ===== -->
+    <div class="card">
+      <h2>✏️ 캡션 작업</h2>
+      <div class="caption-fixed">
+        <textarea id="captionInput" placeholder="검수할 캡션 텍스트를 이곳에 입력하세요..."></textarea>
+        <div id="counter" class="counter">공백 포함 <b>0</b>자</div>
+        <div class="row">
+          <button class="btn" onclick="inspectCaption()">검수하기</button>
+          <button class="btn sec" onclick="clearAll()">지우기</button>
         </div>
+      </div>
+      <div class="left-scroll">
+        <div id="resultText" class="result-box">검수 결과(하이라이트)가 여기에 표시됩니다.</div>
+        <div class="info-box">
+          이미지에 'KSI', '한국국학진흥원'이 있다면 워터마크를 반드시 묘사해 주세요.<br>
+          예: 'KSI' 워터마크가 오른쪽 아래로 향하는 대각선으로 여러 줄에 걸쳐 들어가 있으며, 오른쪽 아래에 노란색과 회색으로 구성된 '한국국학진흥원' 로고가 존재한다.
+        </div>
+      </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- ===== 오른쪽: 파일철 탭 ===== -->
+    <div class="card tabcard">
+      <div class="tabs">
+        <button class="tab active" id="tabChecklistBtn" onclick="switchTab('checklist')">
+          형식 조건 체크리스트 <span class="tab-badge" id="checkBadge"></span>
+        </button>
+        <button class="tab" id="tabGenBtn" onclick="switchTab('gen')">문장 생성기</button>
+      </div>
+
+      <!-- 탭 1: 체크리스트 -->
+      <div class="tabpanel active" id="panelChecklist">
+        <div class="summary">
+          <span><i class="dot" style="background:var(--green)"></i>초록: 확인됨</span>
+          <span><i class="dot" style="background:var(--yellow)"></i>노랑: 직접 확인</span>
+          <span><i class="dot" style="background:var(--red)"></i>빨강: 미작성·위반</span>
+        </div>
+        <div id="checklist" class="left-scroll"></div>
+      </div>
+
+      <!-- 탭 2: 문장 생성기 -->
+      <div class="tabpanel" id="panelGen">
+        <div class="left-scroll">
+          <p class="sub" style="margin:0 0 10px">선택지를 고르면 고정 문형으로 문장이 만들어집니다. 광원·그림자는 뚜렷할 때만 서술하세요.</p>
+          <div class="gen-grid">
+            <div class="gen-group">
+              <strong>앵글 (촬영 높이)</strong>
+              <label class="opt"><input type="radio" name="angle" value="아이레벨">아이레벨</label>
+              <label class="opt"><input type="radio" name="angle" value="부감">부감</label>
+              <label class="opt"><input type="radio" name="angle" value="로우앵글">로우앵글</label>
+            </div>
+            <div class="gen-group">
+              <strong>방향 (보는 면)</strong>
+              <label class="opt"><input type="radio" name="dir" value="">— 생략 —</label>
+              <label class="opt"><input type="radio" name="dir" value="정면">정면</label>
+              <label class="opt"><input type="radio" name="dir" value="측면">측면</label>
+              <label class="opt"><input type="radio" name="dir" value="후면">후면</label>
+              <label class="opt"><input type="radio" name="dir" value="사면">사면</label>
+            </div>
+            <div class="gen-group">
+              <strong>프레이밍 (거리)</strong>
+              <label class="opt"><input type="radio" name="frame" value="클로즈업">클로즈업 (인물)</label>
+              <label class="opt"><input type="radio" name="frame" value="상반신">상반신 (인물)</label>
+              <label class="opt"><input type="radio" name="frame" value="전신">전신 (인물)</label>
+              <label class="opt"><input type="radio" name="frame" value="근접">근접 (사물·공간)</label>
+              <label class="opt"><input type="radio" name="frame" value="중경">중경 (사물·공간)</label>
+              <label class="opt"><input type="radio" name="frame" value="원경">원경 (사물·공간)</label>
+            </div>
+            <div class="gen-group">
+              <strong>매체</strong>
+              <label class="opt"><input type="radio" name="media" value="사진" checked>사진</label>
+              <label class="opt"><input type="radio" name="media" value="일러스트">일러스트</label>
+              <label class="opt"><input type="radio" name="media" value="__custom__">기타 (직접 입력)</label>
+              <input type="text" id="mediaCustom" placeholder="예: 회화, 3D 렌더링" oninput="onMediaCustomInput()"
+                     style="width:100%;margin-top:5px;padding:5px 8px;font-size:13px;border:1px solid #ced4da;border-radius:5px;display:none">
+            </div>
+            <div class="gen-group">
+              <strong>시간대</strong>
+              <label class="opt"><input type="radio" name="time" value="">— 선택 안 함 (실내 등) —</label>
+              <label class="opt"><input type="radio" name="time" value="낮">낮</label>
+              <label class="opt"><input type="radio" name="time" value="해질녘">해질녘</label>
+              <label class="opt"><input type="radio" name="time" value="야간">야간</label>
+            </div>
+            <div class="gen-group">
+              <strong>광원</strong>
+              <label class="opt"><input type="radio" name="light" value="흐림">서술 안 함 (흐린 확산광)</label>
+              <label class="opt"><input type="radio" name="light" value="왼쪽">왼쪽에서</label>
+              <label class="opt"><input type="radio" name="light" value="오른쪽">오른쪽에서</label>
+              <label class="opt"><input type="radio" name="light" value="실내조명">실내조명</label>
+              <label class="opt"><input type="radio" name="light" value="자연광">자연광 (야간)</label>
+            </div>
+            <div class="gen-group">
+              <strong>그림자</strong>
+              <label class="opt"><input type="radio" name="shadow" value="뚜렷하지 않음">서술 안 함 (뚜렷하지 않음)</label>
+              <label class="opt"><input type="radio" name="shadow" value="오른쪽">오른쪽으로 드리움</label>
+              <label class="opt"><input type="radio" name="shadow" value="왼쪽">왼쪽으로 드리움</label>
+            </div>
+          </div>
+
+          <div class="preview" id="genPreview">선택지를 고르면 문장이 여기에 나타납니다.</div>
+          <div class="row">
+            <button class="btn sm gen" onclick="copyGen()">문장 복사</button>
+            <button class="btn sm gen" onclick="replaceSelection()">선택 영역 교체</button>
+          </div>
+          <p class="hint">교체: 왼쪽 캡션 입력창에서 기존 AI 문장을 <b>드래그로 선택</b>한 뒤 이 버튼을 누르면, 선택 부분이 생성 문장으로 바뀝니다. (중복 삽입 방지)</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== 공통 유틸 ========== */
+function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+function maskQuotedText(t){return t.replace(/('[^']*'|"[^"]*"|‘[^’]*’|“[^”]*”)/g,m=>'ㅁ'.repeat(m.length));}
+
+/* ========== 기존 검사 사전 (계승) ========== */
+const BANNED=["고요한","고요하다","고요하게","차분한","차분하다","차분하게","밝은 분위기","밝은 분위기이다","활기찬","활기차다","활기차게","경쾌한","경쾌하다","경쾌하게","웅장한","웅장하다","웅장하게","장엄한","장엄하다","장엄하게","감성적인","감성적이다","감성적으로","인상적인","인상적이다","인상적으로","상징적인","상징적이다","상징적으로","의미 있는","의미 있다","의미 있게","특징적인","특징적이다","특징적으로","깨끗한 느낌","편안한","편안하다","편안하게","안락한","안락하다","안락하게","따뜻한 느낌","자연스러운","자연스럽다","자연스럽게","자연스러운 분위기","돋보이는","돋보인다","돋보이도록","돋보이게","눈길을 끄는","눈길을 끈다","눈길을 사로잡는","눈길을 사로잡는다","강렬한","강렬하다","강렬하게","부각되는","부각된다","부각되게","두드러지는","두드러진다","두드러지게","느낌을 준다","느낌을 주는","강조되어","강조되는","강조된다","강조한다","강조하는","부드러운","부드럽다","부드럽게","평화로운","평화롭다","평화롭게","다채로운","다채롭다","다채롭게","매콤한","매콤하다","매콤하게","한가로운","한가롭다","한가롭게","눈에 띄게","눈에 띄는","눈에 띈다","어우러져","어우러지는","어우러진다","조화로운","조화롭다","조화롭게","안정감 있는","안정감 있다","안정감 있게","정성스럽게","정성스러운","정성스럽다","아늑한","아늑하다","아늑하게","평온한","평온하다","평온하게","분위기를 자아낸다","분위기를 자아내는","유연한","유연하다","유연하게","독특한","독특하다","독특하게"];
+const WRONG_AGENCY=[{word:"한국학진흥원",regex:/한국학진흥원/g},{word:"국학진흥원",regex:/(?<!한국)국학진흥원/g},{word:"한국진흥원",regex:/한국진흥원/g}];
+const SPECIAL_COLOR_WORDS=["어두운 색","밝은 색","어두운색","밝은색","어두운 색상","밝은 색상","짙은 색","짙은색"];
+const COLORS=["흰","푸른","하얀","붉은","검은","파란","노란","빨간","누런","까만","새하얀","퍼런","연노란","연파란","빨강","파랑","노랑","검정","하양","까망","초록","주황","분홍","보라","연두","청록","자주","연노랑","연분홍","연보라","연하늘","연파랑","진분홍","카키","민트","아이보리","크림","올리브","에메랄드","오렌지","갈색","회색","녹색","베이지색","흑백","하늘색","은색","남색","금색","연갈색","황토색","황갈색","황금빛","적갈색","회색빛","고동색","단색","연회색","햇빛","연녹색","백색","황색","황금색","갈색빛","미색","진녹색","회갈색","청색","진갈색","상아색","황동색","배색","무채색","회백색","불빛","진회색","살구색","채색","청회색","은빛","황록색","금빛","청동색","옥색","흙빛","나무색","연황색","오방색","암회색","호박색","흑색","구리색","세피아","세피아 톤","보랏빛","하늘빛","잿빛","귤색","무지개색","무지개빛"];
+const POS_NOUNS=["위","중앙","오른쪽","왼쪽","왼","오른","아래","안","상단","전경","하단","앞","사이","뒤","방향","너머","주변","앞쪽","뒤쪽","가장자리","옆","중경","양옆","뒤편","좌우","속","우측","오른손","테두리","곳곳","위쪽","아래쪽","오른편","양쪽","정중앙","중심","안쪽","근처","왼손","좌측","왼편","공중","한가운데","꼭대기","사이사이","하단부","가운데","밑","전체","끝부분","원경","중심부","부근","주위","중앙부","앞마당","윗부분","위아래","상단부","앞뒤","후경","전후","건너","중간쯤","반대쪽","옆벽","일렬","가로","세로","정면","내부"];
+const POS_PARTICLES=["에","에서","로","으로","에는","은","는","이","가","의"];
+const QUANTITY_UNITS=["잔","마리","그루","자루","대","장","결레","켤레","채","통","박스","송이","마디","번","권","방울","줌","톨","발짝","바퀴","곡","돈","편","쪽","짝","개","벌","살","손","죽","층","명","인물","사람","소녀","소년","여성","남성","조각","알","기","척","쌍"];
+
+const posNounsStr=POS_NOUNS.join('|');
+const posParticlesStr=POS_PARTICLES.join('|');
+const posRegexCombined=new RegExp(`(?:${posNounsStr})\\s*(?:${posParticlesStr})`);
+const posRegexSpaced=new RegExp(`(?:^| )(?:${posNounsStr})(?: |$)`);
+const numPrefix='(?:\\d+\\s*여?|\\d+|한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|스무|여러|수많은|무수한|일|이|삼|사|오|육|칠|팔|구|십|백|천|만)';
+const unitsStr=QUANTITY_UNITS.join('|');
+const quantPatternUnit=`(?:${numPrefix})\\s*(?:${unitsStr})(?:이|가|은|는|을|를|도|만|의)?`;
+const quantPatternStandalone=`(?:^|\\s)(하나|둘|셋|넷|다섯|여섯|일곱|여덟|아홉|열|여러|수많은|무수한)(?:가|는|은|를|을|이|도|만|의)?(?=$|\\s|[.,!?])`;
+const quantPatternDeterminer=`(?:^|\\s)(한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|스무|여러|수많은|무수한)\\s+[가-힣]+`;
+const quantRegex=new RegExp(`(?:(?:${quantPatternUnit})|(?:${quantPatternStandalone})|(?:${quantPatternDeterminer}))`);
+const colorsStr=COLORS.join('|');
+const colorRegex=new RegExp(`(?:(?:${colorsStr})(?:색|빛)?)(?![색빛])`);
+const colorTypoRegex=new RegExp(`((?:${colorsStr})(?:색색|빛빛))`,'g');
+
+/* 신규 검사 패턴 */
+const percentRegex=/\d+\s*(%|％|퍼센트)/;             // 화면 점유율 (%, ％, 퍼센트)
+const depthRegex=/(앞|뒤|앞쪽|뒤쪽|앞편|뒤편|앞뒤|전경|후경|중경|너머|배경)/; // 입체(앞/뒤) 표현
+const phoneRegex=/(0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{4})/g;              // 전화번호
+const plateRegex=/(\d{2,3}\s?[가-힣]\s?\d{4})/g;                     // 차량 번호판
+const genDupRegex=/(아이레벨|로우앵글|부감|클로즈업|상반신|전신|근접|중경|원경|해질녘|확산광)/g; // 생성문장 중복 감지
+
+/* ========== 검수 실행 ========== */
+function inspectCaption(){
+  const text=document.getElementById("captionInput").value;
+  const resultDiv=document.getElementById("resultText");
+  if(!text.trim()){resultDiv.innerHTML="텍스트를 입력해주세요.";renderChecklist([]);return;}
+
+  const masked=maskQuotedText(text);
+  let ranges=[];
+  const items=[]; // {key,title,status,desc}
+
+  // --- 위반(빨강) 계열: 금지어 ---
+  let bannedFound=[];
+  BANNED.forEach(w=>{
+    let re=new RegExp(w.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&'),'g'),m,f=false;
+    while((m=re.exec(masked))!==null){ranges.push({start:m.index,end:m.index+w.length,className:'hl-banned'});f=true;}
+    if(f)bannedFound.push(w);
+  });
+  items.push(bannedFound.length
+    ? {title:"금지 표현(주관·해석)",status:"red",badge:[...new Set(bannedFound)].join(", ")}
+    : {title:"금지 표현(주관·해석)",status:"green"});
+
+  // --- 잘못된 기관명 ---
+  let agencyFound=[];
+  WRONG_AGENCY.forEach(it=>{let m,f=false;while((m=it.regex.exec(text))!==null){ranges.push({start:m.index,end:m.index+m[0].length,className:'hl-banned'});f=true;}if(f)agencyFound.push(it.word);});
+  if(agencyFound.length)items.push({title:"기관명 정확성",status:"red",badge:agencyFound.join(", ")});
+
+  // --- 형식 오류(연속 공백·줄바꿈·문장부호) ---
+  const formatPatterns=[
+    {regex:/\.{2,}/g,name:"마침표반복"},
+    {regex:/([!?]{2,}|[!?]+\.+|\.+[!?]+)/g,name:"부호반복"},
+    {regex:/[ \xA0]{2,}/g,name:"연속공백"},
+    {regex:/\n/g,name:"줄바꿈"},
+    {regex:/\s+[,.!?]/g,name:"부호앞공백"},
+    {regex:/^\s+/g,name:"시작공백"}
+  ];
+  let fmtFound=[];
+  formatPatterns.forEach(it=>{let m,f=false;while((m=it.regex.exec(masked))!==null){ranges.push({start:m.index,end:m.index+(m[0].length||1),className:'hl-format'});f=true;}if(f)fmtFound.push(it.name);});
+  items.push(fmtFound.length
+    ? {title:"형식(공백·줄바꿈·문장부호)",status:"red",badge:[...new Set(fmtFound)].join(", ")}
+    : {title:"형식(공백·줄바꿈·문장부호)",status:"green"});
+
+  // --- 개인정보 ---
+  let privFound=[];
+  let pm; while((pm=phoneRegex.exec(text))!==null){ranges.push({start:pm.index,end:pm.index+pm[0].length,className:'hl-banned'});privFound.push("전화번호");}
+  while((pm=plateRegex.exec(text))!==null){ranges.push({start:pm.index,end:pm.index+pm[0].length,className:'hl-banned'});privFound.push("차량번호판");}
+  if(privFound.length)items.push({title:"개인정보 패턴",status:"red",badge:[...new Set(privFound)].join(", ")});
+
+  // --- 색상 오타 ---
+  let colorTypo=false,cm;
+  while((cm=colorTypoRegex.exec(text))!==null){ranges.push({start:cm.index,end:cm.index+cm[1].length,className:'hl-format'});colorTypo=true;}
+  if(colorTypo)items.push({title:"색상 표현 오타",status:"red",badge:"색색/빛빛 오타"});
+
+  // --- 분량 (공백 포함 100~500) ---
+  const len=text.length;
+  items.push((len>=100&&len<=500)
+    ? {title:"분량(공백 포함 100~500자)",status:"green",badge:`${len}자`}
+    : {title:"분량(공백 포함 100~500자)",status:"red",badge:`${len}자`});
+
+  // --- 색상 표현 존재 (충족 요건) ---
+  const hasColor=colorRegex.test(text);
+  items.push(hasColor
+    ? {title:"색상 표현",status:"green"}
+    : {title:"색상 표현",status:"red"});
+
+  // --- 불분명한 색상 표현 (위반 요건: 유효 색상 유무와 무관하게 검사) ---
+  const specialColor=SPECIAL_COLOR_WORDS.filter(w=>masked.includes(w));
+  if(specialColor.length){
+    // 하이라이트에도 표시
+    specialColor.forEach(w=>{
+      let idx=masked.indexOf(w);
+      while(idx!==-1){ranges.push({start:idx,end:idx+w.length,className:'hl-format'});idx=masked.indexOf(w,idx+1);}
+    });
+    items.push({title:"불분명한 색상 표현",status:"red",badge:[...new Set(specialColor)].join(", ")});
+  }
+
+  // --- 위치·배치 (좌우·상하·앞뒤 모두 필요) : 평면 위치 + 입체(앞/뒤) 통합 ---
+  let posText=text.replace(/(?:티셔츠|셔츠|재킷|바지|옷|치마|코트|니트)\s*위에/g,"").replace(/(?:발|손|몸|머리|다리)(?:을|를)?\s*앞으로/g,"").replace(/안경/g,"");
+  const hasPlanar=posRegexCombined.test(posText)||posRegexSpaced.test(posText); // 좌우·상하 등
+  const hasDepth=depthRegex.test(text);                                          // 앞뒤·전후경
+  let posMiss=[];
+  if(!hasPlanar)posMiss.push("좌우·상하");
+  if(!hasDepth)posMiss.push("앞뒤");
+  items.push(posMiss.length===0
+    ? {title:"위치·배치 (좌우·상하·앞뒤)",status:"green"}
+    : {title:"위치·배치 (좌우·상하·앞뒤)",status:"red",badge:posMiss.join("·")+" 없음"});
+
+  // --- 화면 점유율 % ---
+  items.push(percentRegex.test(text)
+    ? {title:"화면 점유율(%) 표기",status:"green"}
+    : {title:"화면 점유율(%) 표기",status:"red"});
+
+  // --- 수량 표현 ---
+  items.push(quantRegex.test(text)
+    ? {title:"수량 표현",status:"green"}
+    : {title:"수량 표현",status:"yellow",badge:"미감지(배경이면 예외)"});
+
+  // --- 생성 문장 중복 감지 ---
+  const dupMatches=text.match(genDupRegex)||[];
+  const dupCount={};dupMatches.forEach(w=>dupCount[w]=(dupCount[w]||0)+1);
+  const dupWords=Object.keys(dupCount).filter(w=>dupCount[w]>=2);
+  if(dupWords.length)items.push({title:"시점·광원 문장 중복",status:"yellow",badge:dupWords.join(", ")});
+
+  // --- 사실관계 통합(항상 노랑) ---
+  items.push({title:"사실관계·명칭 정확성",status:"yellow"});
+
+  // --- 시점·시간대·광원·그림자 (AI 추론 불안정, 기계 판정 불가 → 항상 노랑) ---
+  items.push({title:"카메라 시점 (앵글·방향·프레이밍)",status:"yellow"});
+  items.push({title:"시간대·광원·그림자",status:"yellow"});
+
+  // --- 워터마크 확인(노랑) ---
+  items.push({title:"워터마크 묘사 여부",status:"yellow"});
+
+  // 결과 렌더
+  resultDiv.innerHTML=applyHighlights(text,ranges).replace(/\n/g,'<br>');
+  renderChecklist(items);
+}
+
+/* ========== 체크리스트 렌더 ========== */
+// 검수 전에도 항목이 미리 보이도록 하는 대기 목록
+const IDLE_ITEMS=[
+  {title:"금지 표현(주관·해석)"},{title:"형식(공백·줄바꿈·문장부호)"},
+  {title:"분량(공백 포함 100~500자)"},{title:"색상 표현"},
+  {title:"위치·배치 (좌우·상하·앞뒤)"},
+  {title:"화면 점유율(%) 표기"},{title:"수량 표현"},
+  {title:"사실관계·명칭 정확성"},
+  {title:"카메라 시점 (앵글·방향·프레이밍)"},{title:"시간대·광원·그림자"},
+  {title:"워터마크 묘사 여부"}
+];
+function renderIdle(){
+  document.getElementById("checklist").innerHTML=IDLE_ITEMS.map(it=>`
+    <div class="check idle">
+      <span class="lamp"></span>
+      <span class="title">${escapeHtml(it.title)}</span>
+    </div>`).join('');
+}
+function renderChecklist(items){
+  const box=document.getElementById("checklist");
+  if(!items.length){renderIdle();updateCheckBadge(null);return;}
+  const order={red:0,yellow:1,green:2};
+  items.sort((a,b)=>order[a.status]-order[b.status]);
+  box.innerHTML=items.map(it=>`
+    <div class="check ${it.status}">
+      <span class="lamp"></span>
+      <span class="title">${escapeHtml(it.title)}</span>
+      ${it.badge?`<span class="badge">${escapeHtml(it.badge)}</span>`:''}
+    </div>`).join('');
+  updateCheckBadge(items);
+}
+
+// 탭 이름 옆 배지: 빨강 우선(개수), 없으면 노랑(개수), 다 통과면 초록 체크
+function updateCheckBadge(items){
+  const b=document.getElementById("checkBadge");
+  if(!items){b.className="tab-badge";b.textContent="";return;}
+  const red=items.filter(i=>i.status==="red").length;
+  const yellow=items.filter(i=>i.status==="yellow").length;
+  if(red){b.className="tab-badge red";b.textContent=red;}
+  else if(yellow){b.className="tab-badge yellow";b.textContent=yellow;}
+  else{b.className="tab-badge green";b.textContent="✓";}
+}
+
+// 파일철 탭 전환
+function switchTab(name){
+  const isChk=name==="checklist";
+  document.getElementById("tabChecklistBtn").classList.toggle("active",isChk);
+  document.getElementById("tabGenBtn").classList.toggle("active",!isChk);
+  document.getElementById("panelChecklist").classList.toggle("active",isChk);
+  document.getElementById("panelGen").classList.toggle("active",!isChk);
+}
+renderIdle(); // 로드 시 대기 상태 표시
+
+/* ========== 하이라이트 ========== */
+function applyHighlights(text,ranges){
+  if(!ranges.length)return escapeHtml(text);
+  ranges.sort((a,b)=>a.start-b.start||b.end-a.end);
+  let out=[],last=-1;
+  for(let r of ranges){if(r.start>=last){out.push(r);last=r.end;}}
+  let res="",i=0;
+  for(let r of out){
+    res+=escapeHtml(text.substring(i,r.start));
+    let c=escapeHtml(text.substring(r.start,r.end)).replace(/ /g,'␣').replace(/\xA0/g,'␣').replace(/\n/g,'⏎\n');
+    res+=`<span class="${r.className}">${c}</span>`;i=r.end;
+  }
+  res+=escapeHtml(text.substring(i));
+  return res;
+}
+
+/* ========== 문장 생성기 ========== */
+function val(name){const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:null;}
+
+// 한글 받침 유무로 종결어미 결정: 받침 있으면 '이다.', 없으면 '다.'
+function josaIda(word){
+  if(!word)return "다.";
+  const ch=word[word.length-1];
+  const code=ch.charCodeAt(0);
+  if(code<0xAC00||code>0xD7A3)return "이다."; // 한글 아니면(영문·숫자 등) 기본 '이다.'
+  const hasJong=(code-0xAC00)%28!==0;
+  return hasJong?"이다.":"다.";
+}
+
+// '기타(직접 입력)' 선택 시 입력칸 표시/숨김
+function onMediaCustomInput(){refreshPreview();}
+function syncMediaCustomBox(){
+  const custom=document.querySelector('input[name="media"]:checked');
+  const box=document.getElementById("mediaCustom");
+  if(custom&&custom.value==="__custom__"){box.style.display="block";}
+  else{box.style.display="none";}
+}
+
+function buildSentence(){
+  const angle=val("angle"),dir=val("dir"),frame=val("frame");
+  const time=val("time"),light=val("light"),shadow=val("shadow");
+
+  // 매체 결정 (사진/일러스트/기타 직접입력)
+  let media=val("media")||"사진";
+  if(media==="__custom__"){
+    media=(document.getElementById("mediaCustom").value||"").trim();
+  }
+
+  // 시점 문장: "정면 아이레벨 시점의 클로즈업 사진이다/일러스트다" 통일 문형
+  let cam="";
+  if(angle&&media){
+    const head=[dir,angle].filter(Boolean).join(" ");
+    const mid=[head+" 시점의",frame].filter(Boolean).join(" ");
+    cam=`${mid} ${media}${josaIda(media)}`;
+  }
+
+  // 광원·시간대 문장: 시간대가 없어도(실내 등) 광원/그림자만으로 생성
+  let lightSent="";
+  // 광원 서술 어구 (연결형 / 종결형)
+  const lightMap={
+    "흐림":       {conn:"전체적으로 흐린 확산광이라",       end:"전체적으로 흐린 확산광이다."},
+    "왼쪽":       {conn:"왼쪽에서 빛이 들어와",       end:"왼쪽에서 빛이 든다."},
+    "오른쪽":     {conn:"오른쪽에서 빛이 들어와",     end:"오른쪽에서 빛이 든다."},
+    "실내조명":   {conn:"실내조명이 비치며",                 end:"실내조명이 비친다."},
+    "자연광":     {conn:"자연광이 비치며",                   end:"자연광이 비친다."}
+  };
+  const shadowMap={
+    "뚜렷하지 않음":"그림자가 뚜렷하지 않다.",
+    "오른쪽":"오른쪽으로 그림자가 드리운다.",
+    "왼쪽":"왼쪽으로 그림자가 드리운다."
+  };
+  if(time||light||shadow){
+    let parts=[];
+    const hasShadow=shadow&&shadowMap[shadow];
+    if(time){
+      // 시간대 있음: "낮 시간대이며 [광원 연결형] [그림자]" 형태
+      if(light&&lightMap[light]){
+        parts.push(`${time} 시간대이며`);
+        parts.push(hasShadow?lightMap[light].conn:lightMap[light].end.replace(/\.$/,"."));
+        if(!hasShadow){parts[parts.length-1]=lightMap[light].end;}
+      }else{
+        // 광원 없이 시간대만
+        parts.push(hasShadow?`${time} 시간대이며`:`${time} 시간대이다.`);
+      }
+    }else{
+      // 시간대 없음(실내 등): 광원부터 시작
+      if(light&&lightMap[light]){
+        parts.push(hasShadow?lightMap[light].conn:lightMap[light].end);
+      }
+    }
+    if(hasShadow)parts.push(shadowMap[shadow]);
+    lightSent=parts.join(" ").trim();
+  }
+
+  return [cam,lightSent].filter(Boolean).join(" ").trim();
+}
+
+function refreshPreview(){
+  const s=buildSentence();
+  document.getElementById("genPreview").textContent=s||"선택지를 고르면 문장이 여기에 나타납니다.";
+}
+document.querySelectorAll('.gen-grid input').forEach(el=>el.addEventListener('change',()=>{syncMediaCustomBox();refreshPreview();}));
+
+function copyGen(){
+  const s=buildSentence();
+  if(!s){toast("먼저 선택지를 고르세요.");return;}
+  navigator.clipboard.writeText(s).then(()=>toast("문장을 복사했습니다."),()=>toast("복사 실패 — 직접 선택해 복사하세요."));
+}
+
+function replaceSelection(){
+  const s=buildSentence();
+  if(!s){toast("먼저 선택지를 고르세요.");return;}
+  const ta=document.getElementById("captionInput");
+  const start=ta.selectionStart,end=ta.selectionEnd;
+  if(start===end){toast("교체할 영역을 캡션에서 드래그로 선택하세요.");return;}
+  const v=ta.value;
+  ta.value=v.substring(0,start)+s+v.substring(end);
+  ta.focus();
+  ta.selectionStart=start;ta.selectionEnd=start+s.length;
+  updateCounter();
+  toast("선택 영역을 교체했습니다. 다시 검수해 주세요.");
+}
+
+/* ========== 글자수 & 초기화 ========== */
+// 캡션 전체가 항상 보이도록 입력창 높이를 내용에 맞춰 자동 확장
+function autoGrow(){
+  const ta=document.getElementById("captionInput");
+  ta.style.height="auto";
+  // 카드 높이의 약 60%를 상한으로: 평소엔 전체가 보이고, 비정상적으로 길 때만 내부 스크롤
+  const card=ta.closest(".card");
+  const cap=card?Math.max(200,card.clientHeight*0.6):9999;
+  const need=ta.scrollHeight;
+  if(need>cap){ta.style.height=cap+"px";ta.style.overflowY="auto";}
+  else{ta.style.height=need+"px";ta.style.overflowY="hidden";}
+}
+function updateCounter(){
+  const len=document.getElementById("captionInput").value.length;
+  const c=document.getElementById("counter");
+  c.innerHTML=`공백 포함 <b>${len}</b>자`;
+  c.className="counter"+((len<100||len>500)&&len>0?" bad":"");
+  autoGrow();
+}
+document.getElementById("captionInput").addEventListener('input',updateCounter);
+
+function clearAll(){
+  document.getElementById("captionInput").value="";
+  document.getElementById("resultText").innerHTML="검수 결과(하이라이트)가 여기에 표시됩니다.";
+  renderChecklist([]);updateCounter();
+}
+autoGrow(); // 로드 시 초기 높이 설정
+window.addEventListener('resize',autoGrow);
+</script>
 </body>
 </html>
